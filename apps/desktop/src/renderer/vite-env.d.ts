@@ -2701,7 +2701,14 @@ interface ElectronAPI {
      * mobile = 手机推送:桌面侧无独立开关(手机端注册/注销 token 决定接收),
      * 发送侧防打扰在 main 的 device-link 模块收口,renderer 恒传 true。
      */
-    channels?: { desktop?: boolean; feishu?: boolean; mobile?: boolean };
+    channels?: {
+      desktop?: boolean;
+      feishu?: boolean;
+      mobile?: boolean;
+      wecom?: boolean;
+      telegram?: boolean;
+      webhook?: boolean;
+    };
   }) => Promise<void>;
   /** Sync the renderer-owned global desktop-notification preference to main. */
   notificationSetDesktopEnabled?: (enabled: boolean) => Promise<{ ok: true }>;

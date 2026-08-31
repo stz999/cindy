@@ -32,6 +32,7 @@ import { getMobileNotifyGeneration, sendMobileSessionNotify } from './device-lin
 import { latestMessageText } from './localDb/latestMessageText';
 import { drainPersistQueue } from './messagePersistBroadcaster';
 import { createLogger } from './logger';
+import type { NotificationBridge } from './notificationBridge';
 import {
   getSessionExternalNotificationText,
   getSessionNotificationBody,
@@ -81,7 +82,14 @@ interface ShowSessionEventPayload {
    * mobile 通道没有桌面侧开关:是否收到由手机端自行注册/注销推送 token 决定,
    * 发送侧的防打扰(远程正在看该会话 / 短窗去重)在 device-link 模块内收口。
    */
-  channels?: { desktop?: boolean; feishu?: boolean; mobile?: boolean };
+  channels?: {
+    desktop?: boolean;
+    feishu?: boolean;
+    mobile?: boolean;
+    wecom?: boolean;
+    telegram?: boolean;
+    webhook?: boolean;
+  };
 }
 
 /**
@@ -139,10 +147,11 @@ export interface NotificationServiceDeps {
    * (main/im 模块单例),保证 owner openId 与卡片回执等行为一致。
    */
   feishuIm: FeishuIM;
+  notificationBridge?: NotificationBridge;
 }
 
 export function initNotificationService(deps: NotificationServiceDeps): void {
-  const { getWindow, feishuIm } = deps;
+  const { getWindow, feishuIm, notificationBridge } = deps;
 
   ipcMain.handle('notification:set-desktop-enabled', (_event, enabled: unknown) => {
     if (typeof enabled !== 'boolean') {
@@ -210,6 +219,29 @@ export function initNotificationService(deps: NotificationServiceDeps): void {
       if (wantFeishu) {
         await sendFeishuMessage(feishuIm, safeTitle, kind);
       }
+
+      if (
+        notificationBridge &&
+        (channels?.wecom === true || channels?.telegram === true || channels?.webhook === true)
+      ) {
+        void notificationBridge
+          .dispatch(
+            {
+              sessionId,
+              title: safeTitle,
+              kind,
+              text: getSessionExternalNotificationText(safeTitle, kind),
+            },
+            {
+              wecom: channels?.wecom === true,
+              telegram: channels?.telegram === true,
+              webhook: channels?.webhook === true,
+            },
+          )
+          .catch((err) => {
+            log.warn('[notification] external provider dispatch failed (non-fatal)', err);
+          });
+      }
     },
   );
 }
@@ -217,12 +249,21 @@ export function initNotificationService(deps: NotificationServiceDeps): void {
 const SESSION_EVENT_KINDS: ReadonlySet<string> = new Set(['done', 'error', 'needs-reply']);
 const SESSION_ID_MAX_LENGTH = 256;
 const SESSION_TITLE_MAX_LENGTH = 1024;
+const SESSION_NOTIFICATION_CHANNELS = [
+  'desktop',
+  'feishu',
+  'mobile',
+  'wecom',
+  'telegram',
+  'webhook',
+] as const;
 
 /** show-session-event 的运行时校验:非法直接抛(invoke reject),不进任何通知通道。 */
 function assertValidSessionEventPayload(
   payload: unknown,
 ): asserts payload is ShowSessionEventPayload {
   const p = payload as Partial<ShowSessionEventPayload> | null;
+  const channels = p?.channels;
   if (
     !p ||
     typeof p !== 'object' ||
@@ -233,7 +274,14 @@ function assertValidSessionEventPayload(
     p.title.length > SESSION_TITLE_MAX_LENGTH ||
     typeof p.kind !== 'string' ||
     !SESSION_EVENT_KINDS.has(p.kind) ||
-    (p.channels !== undefined && (typeof p.channels !== 'object' || p.channels === null))
+    (channels !== undefined &&
+      (typeof channels !== 'object' ||
+        channels === null ||
+        SESSION_NOTIFICATION_CHANNELS.some(
+          (channel) =>
+            channel in channels &&
+            typeof (channels as Record<string, unknown>)[channel] !== 'boolean',
+        )))
   ) {
     throw new TypeError('invalid session event payload');
   }

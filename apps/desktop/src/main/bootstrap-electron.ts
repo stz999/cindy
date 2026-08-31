@@ -433,7 +433,15 @@ import { registerProcessMonitorIpc } from './process-monitor/ipc.js';
 import { disposeWindowsProcessScanWorkers } from './process-monitor/windowsProcessScanWorkerClient.js';
 import { initAppBadgeService, clearAllSessionAttention } from './appBadgeService';
 import { initNotificationService } from './notificationService';
-import { initWecomGroupNotificationIpc } from './wecomGroupNotification';
+import {
+  createTelegramNotificationProvider,
+  createWecomNotificationProvider,
+  NotificationBridge,
+} from './notificationBridge';
+import {
+  initWecomGroupNotificationIpc,
+  wecomGroupNotificationService,
+} from './wecomGroupNotification';
 import { getAgentIslandService, initAgentIslandService } from './agent-island/service.js';
 import { attachWorkLouderCodexWindowReveal } from './worklouder-codex/index.js';
 import {
@@ -1371,6 +1379,7 @@ import {
 } from './logger.js';
 initLogger();
 const dbClientLog = createLogger('DbClient');
+const notificationBridgeLog = createLogger('notificationBridge');
 const authBoundaryLog = createLogger('auth-boundary');
 // 镜像缓存清理失败会把 MirrorCachePurgeError 的 root/remaining 本地缓存路径写进日志,单独一个
 // 子 scope,好让日志上报的来源白名单把它排除掉(auth-boundary 根只留不带路径的服务停止诊断)。
@@ -3988,6 +3997,15 @@ const registerIpcHandlers = () => {
   initNotificationService({
     getWindow: () => getWindow() ?? null,
     feishuIm,
+    notificationBridge: new NotificationBridge(
+      {
+        wecom: createWecomNotificationProvider(wecomGroupNotificationService),
+        telegram: createTelegramNotificationProvider(telegramIm),
+      },
+      (channel, error) => {
+        notificationBridgeLog.warn(`[notification] ${channel} provider failed (non-fatal)`, error);
+      },
+    ),
   });
   initWecomGroupNotificationIpc();
   initAgentIslandService({

@@ -99,6 +99,10 @@ import { GhostPanelRestoreEntry } from '@/cindy-brain/GhostPanelRestoreEntry';
 import { GhostMainViewNavEntries } from '@/components/sidebar/GhostMainViewNavEntries';
 import { getNotificationsEnabled } from '@/hooks/useNotificationSettings';
 import { getFeishuNotificationsEnabled } from '@/hooks/useFeishuNotificationSettings';
+import {
+  getTelegramNotificationsEnabled,
+  getWecomNotificationsEnabled,
+} from '@/hooks/useNotificationBridgeSettings';
 import { getAgentIslandEnabled, isAgentIslandSupported } from '@/hooks/useAgentIslandSettings';
 import type { Session } from '@/lib/ccAgent.types';
 import {
@@ -1077,6 +1081,8 @@ function ExpandedView({
           desktop: desktopEnabled,
           feishu: feishuEnabled,
           mobile: true,
+          wecom: getWecomNotificationsEnabled(),
+          telegram: getTelegramNotificationsEnabled(),
         },
       });
     },

@@ -104,9 +104,9 @@ vi.mock('../device-link', () => ({
 
 // mobile 正文素材:最近一条 assistant 内容(真实实现走 localDb)。默认空 = 无摘要,
 // 既有用例的调用断言不带 detail;内容用例单独 mockResolvedValueOnce。
-const latestMessageText = vi.fn<
-  (sessionId: string, role: string) => Promise<string>
->(async () => '');
+const latestMessageText = vi.fn<(sessionId: string, role: string) => Promise<string>>(
+  async () => '',
+);
 vi.mock('../localDb/latestMessageText', () => ({
   latestMessageText: (sessionId: string, role: string) => latestMessageText(sessionId, role),
 }));
@@ -180,9 +180,7 @@ describe('notificationService — channels 分发', () => {
 
     await handler?.({}, false);
     expect(getDesktopNotificationsEnabled()).toBe(false);
-    expect(() => handler?.({}, 'false')).toThrow(
-      'notification desktop enabled must be a boolean',
-    );
+    expect(() => handler?.({}, 'false')).toThrow('notification desktop enabled must be a boolean');
   });
 
   it('payload.channels 缺省 → 仅桌面 toast (默认契约,防御漏传)', async () => {
@@ -208,6 +206,8 @@ describe('notificationService — channels 分发', () => {
       { sessionId: 's1', title: 'x', kind: 'pwned' },
       { sessionId: 's1', title: 'x'.repeat(1025), kind: 'done' },
       { sessionId: 's1', title: 'x', kind: 'done', channels: 'all' },
+      { sessionId: 's1', title: 'x', kind: 'done', channels: { telegram: 'yes' } },
+      { sessionId: 's1', title: 'x', kind: 'done', channels: { webhook: 1 } },
       null,
     ];
     for (const payload of invalids) {

@@ -1018,6 +1018,11 @@ export class TelegramIM extends BaseIM implements ChannelIM {
     return this.botId ? String(this.botId) : '';
   }
 
+  /** 当前 bot 绑定的主人 Telegram user id；未配置或未绑定时返回 null。 */
+  getOwnerUserId(): string | null {
+    return this.ownerUserId || null;
+  }
+
   // ── connect / polling ──────────────────────────────────────────────────────
 
   private async connect(token: string): Promise<boolean> {
