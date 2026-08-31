@@ -57,7 +57,9 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Expo Prebuild Android
-        run: pnpm --filter mobile prebuild --platform android --clean
+        run: |
+          cd apps/mobile
+          npx expo prebuild --platform android --clean
         env:
           EXPO_PUBLIC_CINDY_AUTH_REGION: cn
 
