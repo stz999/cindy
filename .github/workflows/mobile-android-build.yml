@@ -61,15 +61,17 @@ jobs:
           cp config/endpoint.dev.json.example config/endpoint.dev.json
           cd apps/mobile
           npx expo prebuild --platform android --clean
+          node -e "import('./scripts/lib/android-local.mjs').then(m => { const p = 'android/gradle.properties'; import('fs').then(fs => fs.writeFileSync(p, m.patchGradlePropertiesMemory(fs.readFileSync(p, 'utf8'), { xmxMb: 4096, metaspaceMb: 2048 }))) })"
         env:
           EXPO_PUBLIC_CINDY_AUTH_REGION: cn
 
       - name: Build Android APK
         run: |
           cd apps/mobile/android
-          ./gradlew assembleRelease
+          ./gradlew assembleRelease --no-daemon
         env:
           EXPO_PUBLIC_CINDY_AUTH_REGION: cn
+          GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx4096m -XX:MaxMetaspaceSize=2048m -XX:+HeapDumpOnOutOfMemoryError"'
 
       - name: Upload Android APK
         uses: actions/upload-artifact@v5
