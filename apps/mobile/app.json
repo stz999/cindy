@@ -38,12 +38,14 @@
     "android": {
       "package": "com.xd.cindycn",
       "adaptiveIcon": {
-        "backgroundColor": "#F70121",
+        "backgroundColor": "#0A0D18",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "permissions": ["android.permission.MODIFY_AUDIO_SETTINGS"],
+      "permissions": [
+        "android.permission.MODIFY_AUDIO_SETTINGS"
+      ],
       "blockedPermissions": [
         "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.WRITE_EXTERNAL_STORAGE",
