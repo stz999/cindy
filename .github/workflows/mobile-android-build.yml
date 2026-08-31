@@ -58,6 +58,7 @@ jobs:
 
       - name: Expo Prebuild Android
         run: |
+          cp config/endpoint.dev.json.example config/endpoint.dev.json
           cd apps/mobile
           npx expo prebuild --platform android --clean
         env:
