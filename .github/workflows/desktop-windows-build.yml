@@ -19,7 +19,8 @@ env:
   # explicitly fetches the only runtime binary required for this build.
   XDT_SKIP_AGENT_BIN_INSTALL: '1'
   NODE_OPTIONS: '--max-old-space-size=8192'
-  CINDY_AUTH_REGION: global
+  # This workflow produces the Mainland China desktop package.
+  CINDY_AUTH_REGION: cn
 
 jobs:
   build-windows:
@@ -58,7 +59,7 @@ jobs:
         run: pnpm --filter desktop build
 
       - name: Upload Windows desktop packages
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: cindy-desktop-windows-${{ github.sha }}
           path: apps/desktop/out/make/**
